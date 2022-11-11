@@ -14,6 +14,7 @@ use core::ptr;
 use core::str;
 
 use crate::position;
+use crate::parse_input::ParseInput;
 
 /// A span over a `&str`. It is created from either [two `Position`s] or from a [`Pair`].
 ///
@@ -143,7 +144,7 @@ impl<'i> Span<'i> {
     /// assert_eq!(span.start_pos(), start);
     /// ```
     #[inline]
-    pub fn start_pos(&self) -> position::Position<'i> {
+    pub fn start_pos(&self) -> position::Position<'i, impl ParseInput> {
         // Span's start position is always a UTF-8 border.
         unsafe { position::Position::new_unchecked(self.input, self.start) }
     }
@@ -162,7 +163,7 @@ impl<'i> Span<'i> {
     /// assert_eq!(span.end_pos(), end);
     /// ```
     #[inline]
-    pub fn end_pos(&self) -> position::Position<'i> {
+    pub fn end_pos(&self) -> position::Position<'_, impl ParseInput> {
         // Span's end position is always a UTF-8 border.
         unsafe { position::Position::new_unchecked(self.input, self.end) }
     }
@@ -181,7 +182,7 @@ impl<'i> Span<'i> {
     /// assert_eq!(span.split(), (start, end));
     /// ```
     #[inline]
-    pub fn split(self) -> (position::Position<'i>, position::Position<'i>) {
+    pub fn split(self) -> (position::Position<'i, impl ParseInput>, position::Position<'i, impl ParseInput>) {
         // Span's start and end positions are always a UTF-8 borders.
         let pos1 = unsafe { position::Position::new_unchecked(self.input, self.start) };
         let pos2 = unsafe { position::Position::new_unchecked(self.input, self.end) };

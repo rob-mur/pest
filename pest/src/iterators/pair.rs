@@ -228,7 +228,7 @@ impl<'i, R: RuleType> Pair<'i, R> {
     /// assert_eq!(tokens.len(), 2);
     /// ```
     #[inline]
-    pub fn tokens(self) -> Tokens<'i, R> {
+    pub fn tokens(self) -> Tokens<'i, R, impl ParseInput> {
         let end = self.pair();
 
         tokens::new(self.queue, self.input, self.start, end + 1)

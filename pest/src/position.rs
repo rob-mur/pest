@@ -15,24 +15,25 @@ use core::ptr;
 use core::str;
 
 use crate::span;
+use crate::parse_input::ParseInput;
 
 /// A cursor position in a `&str` which provides useful methods to manually parse that string.
 #[derive(Clone, Copy)]
-pub struct Position<'i> {
-    input: &'i str,
+pub struct Position<'i, T: ParseInput> {
+    input: &'i T,
     /// # Safety:
     ///
     /// `input[pos..]` must be a valid codepoint boundary (should not panic when indexing thus).
     pos: usize,
 }
 
-impl<'i> Position<'i> {
+impl<'i, T: ParseInput> Position<'i, T> {
     /// Create a new `Position` without checking invariants. (Checked with `debug_assertions`.)
     ///
     /// # Safety:
     ///
     /// `input[pos..]` must be a valid codepoint boundary (should not panic when indexing thus).
-    pub(crate) unsafe fn new_unchecked(input: &str, pos: usize) -> Position<'_> {
+    pub(crate) unsafe fn new_unchecked(input: &str, pos: usize) -> Position<'_, T> {
         debug_assert!(input.get(pos..).is_some());
         Position { input, pos }
     }
@@ -49,7 +50,7 @@ impl<'i> Position<'i> {
     /// assert_eq!(Position::new(heart, 1), None);
     /// assert_ne!(Position::new(heart, cheart.len_utf8()), None);
     /// ```
-    pub fn new(input: &str, pos: usize) -> Option<Position<'_>> {
+    pub fn new(input: &impl ParseInput, pos: usize) -> Option<Position<'_, T>> {
         input.get(pos..).map(|_| Position { input, pos })
     }
 
@@ -63,7 +64,7 @@ impl<'i> Position<'i> {
     /// assert_eq!(start.pos(), 0);
     /// ```
     #[inline]
-    pub fn from_start(input: &'i str) -> Position<'i> {
+    pub fn from_start(input: &'i str) -> Position<'i, T> {
         // Position 0 is always safe because it's always a valid UTF-8 border.
         Position { input, pos: 0 }
     }
@@ -102,7 +103,7 @@ impl<'i> Position<'i> {
     /// assert_eq!(span.end(), 0);
     /// ```
     #[inline]
-    pub fn span(&self, other: &Position<'i>) -> span::Span<'i> {
+    pub fn span(&self, other: &Position<'i, T>) -> span::Span<'i> {
         if ptr::eq(self.input, other.input)
         /* && self.input.get(self.pos..other.pos).is_some() */
         {
@@ -363,22 +364,22 @@ impl<'i> Position<'i> {
     }
 }
 
-impl<'i> fmt::Debug for Position<'i> {
+impl<'i, T: ParseInput> fmt::Debug for Position<'i, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Position").field("pos", &self.pos).finish()
     }
 }
 
-impl<'i> PartialEq for Position<'i> {
-    fn eq(&self, other: &Position<'i>) -> bool {
+impl<'i, T: ParseInput> PartialEq for Position<'i, T> {
+    fn eq(&self, other: &Position<'i, T>) -> bool {
         ptr::eq(self.input, other.input) && self.pos == other.pos
     }
 }
 
-impl<'i> Eq for Position<'i> {}
+impl<'i, T: ParseInput> Eq for Position<'i, T> {}
 
-impl<'i> PartialOrd for Position<'i> {
-    fn partial_cmp(&self, other: &Position<'i>) -> Option<Ordering> {
+impl<'i, T: ParseInput> PartialOrd for Position<'i, T> {
+    fn partial_cmp(&self, other: &Position<'i, T>) -> Option<Ordering> {
         if ptr::eq(self.input, other.input) {
             self.pos.partial_cmp(&other.pos)
         } else {
@@ -387,14 +388,14 @@ impl<'i> PartialOrd for Position<'i> {
     }
 }
 
-impl<'i> Ord for Position<'i> {
-    fn cmp(&self, other: &Position<'i>) -> Ordering {
+impl<'i, T: ParseInput> Ord for Position<'i, T> {
+    fn cmp(&self, other: &Position<'i, T>) -> Ordering {
         self.partial_cmp(other)
             .expect("cannot compare positions from different strs")
     }
 }
 
-impl<'i> Hash for Position<'i> {
+impl<'i, T: ParseInput> Hash for Position<'i, T> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         (self.input as *const str).hash(state);
         self.pos.hash(state);

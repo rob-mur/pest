@@ -22,6 +22,7 @@ use core::mem;
 use crate::position::Position;
 use crate::span::Span;
 use crate::RuleType;
+use crate::parse_input::ParseInput;
 
 /// Parse-related error type.
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
@@ -101,7 +102,7 @@ impl<R: RuleType> Error<R> {
     ///
     /// println!("{}", error);
     /// ```
-    pub fn new_from_pos(variant: ErrorVariant<R>, pos: Position<'_>) -> Error<R> {
+    pub fn new_from_pos(variant: ErrorVariant<R>, pos: Position<'_, impl ParseInput>) -> Error<R> {
         let visualize_ws = pos.match_char('\n') || pos.match_char('\r');
         let line_of = pos.line_of();
         let line = if visualize_ws {

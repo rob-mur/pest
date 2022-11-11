@@ -22,7 +22,7 @@ use crate::position::{self, Position};
 use crate::span::Span;
 use crate::stack::Stack;
 use crate::RuleType;
-
+use crate::parse_input::ParseInput;
 /// The current lookahead status of a [`ParserState`].
 ///
 /// [`ParserState`]: struct.ParserState.html
@@ -126,8 +126,8 @@ impl CallLimitTracker {
 ///
 /// [`Parser`]: trait.Parser.html
 #[derive(Debug)]
-pub struct ParserState<'i, R: RuleType> {
-    position: Position<'i>,
+pub struct ParserState<'i, R: RuleType, T: ParseInput> {
+    position: Position<'i, T>,
     queue: Vec<QueueableToken<R>>,
     lookahead: Lookahead,
     pos_attempts: Vec<R>,
@@ -148,9 +148,9 @@ pub struct ParserState<'i, R: RuleType> {
 /// pest::state::<(), _>(input, |s| Ok(s)).unwrap();
 /// ```
 #[allow(clippy::perf)]
-pub fn state<'i, R: RuleType, F>(input: &'i str, f: F) -> Result<pairs::Pairs<'i, R>, Error<R>>
+pub fn state<'i, R: RuleType, T: ParseInput, F>(input: &'i T, f: F) -> Result<pairs::Pairs<'i, R>, Error<R>>
 where
-    F: FnOnce(Box<ParserState<'i, R>>) -> ParseResult<Box<ParserState<'i, R>>>,
+    F: FnOnce(Box<ParserState<'i, R, T>>) -> ParseResult<Box<ParserState<'i, R, T>>>,
 {
     let state = ParserState::new(input);
 
@@ -184,7 +184,7 @@ where
     }
 }
 
-impl<'i, R: RuleType> ParserState<'i, R> {
+impl<'i, R: RuleType, T: ParseInput> ParserState<'i, R, T> {
     /// Allocates a fresh `ParserState` object to the heap and returns the owned `Box`. This `Box`
     /// will be passed from closure to closure based on the needs of the specified `Parser`.
     ///
@@ -226,7 +226,7 @@ impl<'i, R: RuleType> ParserState<'i, R> {
     /// let position = state.position();
     /// assert_eq!(position.pos(), 0);
     /// ```
-    pub fn position(&self) -> &Position<'i> {
+    pub fn position(&self) -> &Position<'i, T> {
         &self.position
     }
 

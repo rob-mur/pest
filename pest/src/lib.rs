@@ -335,6 +335,7 @@ pub mod error;
 pub mod iterators;
 mod macros;
 mod parser;
+mod parse_input;
 mod parser_state;
 mod position;
 pub mod pratt_parser;

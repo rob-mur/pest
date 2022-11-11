@@ -16,6 +16,7 @@ use super::queueable_token::QueueableToken;
 use crate::position;
 use crate::token::Token;
 use crate::RuleType;
+use crate::parse_input::ParseInput;
 
 /// An iterator over [`Token`]s. It is created by [`Pair::tokens`] and [`Pairs::tokens`].
 ///
@@ -23,12 +24,12 @@ use crate::RuleType;
 /// [`Pair::tokens`]: struct.Pair.html#method.tokens
 /// [`Pairs::tokens`]: struct.Pairs.html#method.tokens
 #[derive(Clone)]
-pub struct Tokens<'i, R> {
+pub struct Tokens<'i, R, T: ParseInput> {
     /// # Safety:
     ///
     /// All `QueueableToken`s' `input_pos` must be valid character boundary indices into `input`.
     queue: Rc<Vec<QueueableToken<R>>>,
-    input: &'i str,
+    input: &'i T,
     start: usize,
     end: usize,
 }
@@ -39,7 +40,7 @@ pub fn new<R: RuleType>(
     input: &str,
     start: usize,
     end: usize,
-) -> Tokens<'_, R> {
+) -> Tokens<'_, R, impl ParseInput> {
     if cfg!(debug_assertions) {
         for tok in queue.iter() {
             match *tok {
@@ -61,8 +62,8 @@ pub fn new<R: RuleType>(
     }
 }
 
-impl<'i, R: RuleType> Tokens<'i, R> {
-    fn create_token(&self, index: usize) -> Token<'i, R> {
+impl<'i, R: RuleType, T: ParseInput> Tokens<'i, R, T> {
+    fn create_token(&self, index: usize) -> Token<'i, R, T> {
         match self.queue[index] {
             QueueableToken::Start {
                 end_token_index,
@@ -92,8 +93,8 @@ impl<'i, R: RuleType> Tokens<'i, R> {
     }
 }
 
-impl<'i, R: RuleType> Iterator for Tokens<'i, R> {
-    type Item = Token<'i, R>;
+impl<'i, R: RuleType, T: ParseInput + 'i> Iterator for Tokens<'i, R, T> {
+    type Item = Token<'i, R, T>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.start >= self.end {
@@ -108,7 +109,7 @@ impl<'i, R: RuleType> Iterator for Tokens<'i, R> {
     }
 }
 
-impl<'i, R: RuleType> DoubleEndedIterator for Tokens<'i, R> {
+impl<'i, R: RuleType, T: ParseInput + 'i>DoubleEndedIterator for Tokens<'i, R, impl ParseInput> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.end <= self.start {
             return None;
@@ -122,7 +123,7 @@ impl<'i, R: RuleType> DoubleEndedIterator for Tokens<'i, R> {
     }
 }
 
-impl<'i, R: RuleType> fmt::Debug for Tokens<'i, R> {
+impl<'i, R: RuleType, T: ParseInput + 'i>fmt::Debug for Tokens<'i, R, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.clone()).finish()
     }

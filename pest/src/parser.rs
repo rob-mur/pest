@@ -10,10 +10,12 @@
 use crate::error::Error;
 use crate::iterators::Pairs;
 use crate::RuleType;
+use crate::parse_input::ParseInput;
+
 
 /// A trait with a single method that parses strings.
 pub trait Parser<R: RuleType> {
     /// Parses a `&str` starting from `rule`.
     #[allow(clippy::perf)]
-    fn parse(rule: R, input: &str) -> Result<Pairs<'_, R>, Error<R>>;
+    fn parse(rule: R, input: impl ParseInput) -> Result<Pairs<'_, R>, Error<R>>;
 }

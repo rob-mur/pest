@@ -322,6 +322,8 @@ pub mod tests {
     use alloc::format;
     use alloc::vec;
     use alloc::vec::Vec;
+    use crate::parse_input::ParseInput;
+
 
     #[allow(non_camel_case_types)]
     #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -334,7 +336,7 @@ pub mod tests {
     pub struct AbcParser;
 
     impl Parser<Rule> for AbcParser {
-        fn parse(_: Rule, input: &str) -> Result<Pairs<'_, Rule>, Error<Rule>> {
+        fn parse(_: Rule, input: & impl ParseInput) -> Result<Pairs<'_, Rule>, Error<Rule>> {
             state(input, |state| {
                 state
                     .rule(Rule::a, |s| {
